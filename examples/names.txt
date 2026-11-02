@@ -1,0 +1,8 @@
+# Пакеты с многобуквенными именами для проверки фильтра по подстроке
+APP: CORE NET LOG
+CORE: LOG UTIL
+NET: CORE TLS NETUTIL
+TLS: CORE
+NETUTIL: UTIL
+LOG: UTIL
+UTIL:

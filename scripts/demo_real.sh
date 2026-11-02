@@ -1,5 +1,5 @@
 #!/bin/sh
-# Прямые зависимости реальных пакетов crates.io (этап 2)
+# Графы зависимостей реальных пакетов crates.io (нужен интернет)
 cd "$(dirname "$0")/.." || exit 1
 for file in config.xml configs/real_*.xml; do
     echo "=== $file ==="

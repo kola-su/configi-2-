@@ -155,13 +155,16 @@ class RegistryTest(unittest.TestCase):
 
 
 class MainTest(unittest.TestCase):
-    """Проверяет вывод прямых зависимостей программой."""
+    """Проверяет граф реального формата Cargo через HTTP."""
 
-    def test_print_direct(self):
-        """Программа печатает версию пакета и прямые зависимости."""
+    def test_transitive_graph(self):
+        """Транзитивные зависимости загружаются по URL репозитория."""
         with tempfile.TemporaryDirectory() as folder:
             write_index(folder, "demo", index_text(
                 version("1.2.3", [dep("serde"), dep("itoa")])))
+            write_index(folder, "serde", index_text(
+                version("1.0.0", [dep("serde_derive", optional=True)])))
+            write_index(folder, "itoa", index_text(version("1.0.0")))
             with serve(folder) as url:
                 config = ROOT / "config.xml"
                 text = config.read_text(encoding="utf-8")
@@ -174,5 +177,6 @@ class MainTest(unittest.TestCase):
                     code = main.main([str(path)])
         self.assertEqual(code, 0)
         lines = output.getvalue().splitlines()
-        self.assertEqual(lines[0], "Пакет: demo 1.2.3")
-        self.assertEqual(lines[2:], ["  itoa ^1", "  serde ^1"])
+        self.assertIn("demo -> itoa, serde", lines)
+        self.assertIn("serde -> нет зависимостей", lines)
+        self.assertIn("Пакетов в графе: 3", lines)

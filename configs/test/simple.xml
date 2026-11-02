@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Простой граф: общая зависимость E учитывается один раз -->
+<config>
+    <package>A</package>
+    <repository>examples/simple.txt</repository>
+    <test_mode>true</test_mode>
+    <output_file>simple.svg</output_file>
+    <ascii_tree>false</ascii_tree>
+    <max_depth>10</max_depth>
+    <filter></filter>
+</config>

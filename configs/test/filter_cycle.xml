@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Фильтр разрывает цикл: пакет C не учитывается -->
+<config>
+    <package>A</package>
+    <repository>examples/cycle.txt</repository>
+    <test_mode>true</test_mode>
+    <output_file>filter_cycle.svg</output_file>
+    <ascii_tree>false</ascii_tree>
+    <max_depth>10</max_depth>
+    <filter>C</filter>
+</config>

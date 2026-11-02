@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Глубина 2: дальше пакета C зависимости не запрашиваются -->
+<config>
+    <package>A</package>
+    <repository>examples/chain.txt</repository>
+    <test_mode>true</test_mode>
+    <output_file>depth_2.svg</output_file>
+    <ascii_tree>false</ascii_tree>
+    <max_depth>2</max_depth>
+    <filter></filter>
+</config>

@@ -3,8 +3,10 @@
 import argparse
 import sys
 
-from cargo import CargoRegistry, RegistryError, direct_dependencies
+from cargo import CargoRegistry, RegistryError
 from config import ConfigError, load_config
+from graph import build_graph, find_cycles
+from local_repo import FileRepository
 
 DEFAULT_CONFIG = "config.xml"
 
@@ -26,36 +28,66 @@ def print_problems(title, problems):
         print(f"  - {problem}", file=sys.stderr)
 
 
-def print_direct(registry, package):
-    """Печатает прямые зависимости новейшей версии пакета."""
-    entry = registry.latest(package)
-    deps = direct_dependencies(entry)
-    print(f"Пакет: {entry['name']} {entry['vers']}")
-    if not deps:
-        print("Прямых зависимостей нет")
+def open_repository(config):
+    """Создаёт тестовый репозиторий из файла или реестр Cargo по URL."""
+    if config.test_mode:
+        return FileRepository(config.repository)
+    return CargoRegistry(config.repository)
+
+
+def analyze(config):
+    """Строит граф зависимостей пакета по параметрам конфигурации."""
+    repository = open_repository(config)
+    repository.check_package(config.package)
+    return build_graph(config.package, repository.dependencies,
+                       config.max_depth, config.filter_text)
+
+
+def describe_package(graph, name):
+    """Возвращает строку вида 'A -> B, C' для одного пакета."""
+    if not graph.is_expanded(name):
+        return f"{name} -> не анализировался: достигнута максимальная " \
+               f"глубина"
+    deps = graph.edges[name]
+    return f"{name} -> {', '.join(deps) if deps else 'нет зависимостей'}"
+
+
+def print_graph(graph):
+    """Печатает граф: зависимости каждого пакета в порядке BFS."""
+    print(f"Граф зависимостей пакета {graph.root}")
+    print(f"Максимальная глубина: {graph.max_depth}")
+    for name in graph.packages():
+        print(describe_package(graph, name))
+    if graph.skipped:
+        print(f"Исключены фильтром: {', '.join(sorted(graph.skipped))}")
+    print(f"Пакетов в графе: {len(graph.levels)}")
+
+
+def print_cycles(cycles):
+    """Печатает найденные циклические зависимости."""
+    if not cycles:
+        print("Циклические зависимости: не найдены")
         return
-    print(f"Прямые зависимости ({len(deps)}):")
-    for name, requirement in deps:
-        print(f"  {name} {requirement}")
+    print("Циклические зависимости:")
+    for cycle in cycles:
+        print("  " + " -> ".join(cycle))
 
 
 def main(argv=None):
-    """Загружает конфигурацию и выводит прямые зависимости пакета."""
+    """Загружает конфигурацию, строит и выводит граф зависимостей."""
     args = parse_args(argv)
     try:
         config = load_config(args.config)
     except ConfigError as error:
         print_problems("Ошибка конфигурации:", error.problems)
         return 1
-    if config.test_mode:
-        print_problems("Ошибка:", ["режим тестового репозитория "
-                                   "пока не поддерживается"])
-        return 1
     try:
-        print_direct(CargoRegistry(config.repository), config.package)
+        graph = analyze(config)
     except RegistryError as error:
         print_problems("Ошибка получения зависимостей:", [str(error)])
         return 1
+    print_graph(graph)
+    print_cycles(find_cycles(graph.edges, graph.root))
     return 0
 
 

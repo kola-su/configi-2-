@@ -128,6 +128,10 @@ class CargoRegistry:
             self.cache[name] = latest_version(parse_index(text))
         return self.cache[name]
 
+    def check_package(self, name):
+        """Проверяет, что пакет есть в репозитории (иначе ошибка)."""
+        self.latest(name)
+
     def dependencies(self, name):
         """Возвращает имена прямых зависимостей новейшей версии пакета."""
         return [dep for dep, _req in direct_dependencies(self.latest(name))]
