@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Репозиторий по указанному URL недоступен -->
+<config>
+    <package>serde</package>
+    <repository>https://no-such-host.invalid</repository>
+    <test_mode>false</test_mode>
+    <output_file>serde.svg</output_file>
+    <ascii_tree>true</ascii_tree>
+    <max_depth>2</max_depth>
+</config>

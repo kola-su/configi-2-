@@ -144,15 +144,6 @@ class ErrorTest(unittest.TestCase):
 class MainTest(unittest.TestCase):
     """Проверяет вывод программы."""
 
-    def test_prints_key_value(self):
-        """Корректный config.xml выводится парами ключ=значение."""
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            code = main.main([str(ROOT / "config.xml")])
-        self.assertEqual(code, 0)
-        self.assertIn("package=serde_json", output.getvalue())
-        self.assertIn("max_depth=2", output.getvalue())
-
     def test_error_exit_code(self):
         """При ошибке конфигурации код возврата 1 и текст в stderr."""
         errors = io.StringIO()

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Реальный пакет tokio из crates.io -->
+<config>
+    <package>tokio</package>
+    <repository>https://index.crates.io</repository>
+    <test_mode>false</test_mode>
+    <output_file>tokio.svg</output_file>
+    <ascii_tree>true</ascii_tree>
+    <max_depth>2</max_depth>
+    <filter></filter>
+</config>
