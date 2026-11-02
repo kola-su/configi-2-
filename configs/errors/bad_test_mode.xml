@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Режим тестового репозитория не логическое значение -->
+<config>
+    <package>serde</package>
+    <repository>https://index.crates.io</repository>
+    <test_mode>maybe</test_mode>
+    <output_file>graph.svg</output_file>
+    <ascii_tree>true</ascii_tree>
+    <max_depth>2</max_depth>
+</config>

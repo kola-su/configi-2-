@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Тестовый режим: файла репозитория нет, имя пакета строчными -->
+<config>
+    <package>abc</package>
+    <repository>examples/no_such_graph.txt</repository>
+    <test_mode>true</test_mode>
+    <output_file>graph.svg</output_file>
+    <ascii_tree>false</ascii_tree>
+    <max_depth>2</max_depth>
+</config>

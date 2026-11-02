@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Обязательные параметры заданы пустыми -->
+<config>
+    <package></package>
+    <repository></repository>
+    <test_mode>false</test_mode>
+    <output_file></output_file>
+    <ascii_tree>true</ascii_tree>
+    <max_depth>2</max_depth>
+</config>

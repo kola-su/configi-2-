@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Режим ASCII-дерева не логическое значение -->
+<config>
+    <package>serde</package>
+    <repository>https://index.crates.io</repository>
+    <test_mode>false</test_mode>
+    <output_file>graph.svg</output_file>
+    <ascii_tree>tree</ascii_tree>
+    <max_depth>2</max_depth>
+</config>
