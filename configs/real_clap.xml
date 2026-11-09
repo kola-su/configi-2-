@@ -4,7 +4,7 @@
     <package>clap</package>
     <repository>https://index.crates.io</repository>
     <test_mode>false</test_mode>
-    <output_file>clap.svg</output_file>
+    <output_file>output/clap.svg</output_file>
     <ascii_tree>true</ascii_tree>
     <max_depth>2</max_depth>
     <filter></filter>

@@ -5,8 +5,9 @@ import sys
 
 from cargo import CargoRegistry, RegistryError
 from config import ConfigError, load_config
-from graph import build_graph, find_cycles, load_order
+from graph import build_graph, find_cycles
 from local_repo import FileRepository
+from visual import ascii_tree, dot_source, save_svg
 
 DEFAULT_CONFIG = "config.xml"
 
@@ -43,26 +44,6 @@ def analyze(config):
                        config.max_depth, config.filter_text)
 
 
-def describe_package(graph, name):
-    """Возвращает строку вида 'A -> B, C' для одного пакета."""
-    if not graph.is_expanded(name):
-        return f"{name} -> не анализировался: достигнута максимальная " \
-               f"глубина"
-    deps = graph.edges[name]
-    return f"{name} -> {', '.join(deps) if deps else 'нет зависимостей'}"
-
-
-def print_graph(graph):
-    """Печатает граф: зависимости каждого пакета в порядке BFS."""
-    print(f"Граф зависимостей пакета {graph.root}")
-    print(f"Максимальная глубина: {graph.max_depth}")
-    for name in graph.packages():
-        print(describe_package(graph, name))
-    if graph.skipped:
-        print(f"Исключены фильтром: {', '.join(sorted(graph.skipped))}")
-    print(f"Пакетов в графе: {len(graph.levels)}")
-
-
 def print_cycles(cycles):
     """Печатает найденные циклические зависимости."""
     if not cycles:
@@ -73,18 +54,21 @@ def print_cycles(cycles):
         print("  " + " -> ".join(cycle))
 
 
-def print_load_order(graph, cycles):
-    """Печатает порядок загрузки зависимостей пакета."""
-    print(f"Порядок загрузки зависимостей пакета {graph.root}:")
-    for number, name in enumerate(load_order(graph.edges, graph.root), 1):
-        print(f"  {number}. {name}")
-    if cycles:
-        print("Порядок неполный: из-за циклов пропущены рёбра "
-              + ", ".join(f"{cycle[-2]} -> {cycle[-1]}" for cycle in cycles))
+def visualize(config, graph, cycles):
+    """Выводит ASCII-дерево и описание DOT, сохраняет изображение SVG."""
+    if config.ascii_tree:
+        print(f"Зависимости пакета {graph.root} (ASCII-дерево):")
+        print(ascii_tree(graph))
+        print()
+    print("Граф на языке Graphviz (DOT):")
+    print(dot_source(graph, cycles))
+    print()
+    method = save_svg(graph, cycles, config.output_file)
+    print(f"Изображение графа сохранено в {config.output_file} ({method})")
 
 
 def main(argv=None):
-    """Строит граф зависимостей и выводит его и порядок загрузки."""
+    """Строит граф зависимостей пакета и визуализирует его."""
     args = parse_args(argv)
     try:
         config = load_config(args.config)
@@ -97,10 +81,12 @@ def main(argv=None):
         print_problems("Ошибка получения зависимостей:", [str(error)])
         return 1
     cycles = find_cycles(graph.edges, graph.root)
-    print_graph(graph)
+    try:
+        visualize(config, graph, cycles)
+    except OSError as error:
+        print_problems("Ошибка сохранения изображения:", [str(error)])
+        return 1
     print_cycles(cycles)
-    print()
-    print_load_order(graph, cycles)
     return 0
 
 

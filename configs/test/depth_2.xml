@@ -4,8 +4,8 @@
     <package>A</package>
     <repository>examples/chain.txt</repository>
     <test_mode>true</test_mode>
-    <output_file>depth_2.svg</output_file>
-    <ascii_tree>false</ascii_tree>
+    <output_file>output/depth_2.svg</output_file>
+    <ascii_tree>true</ascii_tree>
     <max_depth>2</max_depth>
     <filter></filter>
 </config>

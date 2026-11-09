@@ -5,6 +5,7 @@ import importlib
 import io
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -31,14 +32,23 @@ def build(edges, root="A", depth=10, filter_text=""):
 
 
 def run_main(config_path):
-    """Запускает программу и возвращает (код, stdout, stderr)."""
+    """Запускает программу и возвращает (код, stdout, stderr).
+
+    Изображение сохраняется во временный каталог, а не в репозиторий.
+    """
     output, errors = io.StringIO(), io.StringIO()
     previous = os.getcwd()
     os.chdir(ROOT)
     try:
-        with contextlib.redirect_stdout(output), \
+        with tempfile.TemporaryDirectory() as folder, \
+                contextlib.redirect_stdout(output), \
                 contextlib.redirect_stderr(errors):
-            code = main.main([str(config_path)])
+            text = Path(config_path).read_text(encoding="utf-8")
+            text = text.replace("<output_file>output/",
+                                f"<output_file>{folder}/")
+            path = Path(folder) / "config.xml"
+            path.write_text(text, encoding="utf-8")
+            code = main.main([str(path)])
     finally:
         os.chdir(previous)
     return code, output.getvalue(), errors.getvalue()
@@ -170,8 +180,9 @@ class MainTest(unittest.TestCase):
         """Граф простого репозитория выводится полностью."""
         code, out, _err = run_main(ROOT / "configs/test/simple.xml")
         self.assertEqual(code, 0)
-        self.assertIn("B -> D, E", out)
-        self.assertIn("Пакетов в графе: 7", out)
+        self.assertIn('"B" -> "E";', out)
+        self.assertIn("    ├── E (*)", out)
+        self.assertIn("Изображение графа сохранено", out)
 
     def test_cycle(self):
         """Циклы выводятся отдельным списком."""
@@ -181,17 +192,16 @@ class MainTest(unittest.TestCase):
     def test_depth_and_filter(self):
         """Ограничение глубины и фильтр видны в выводе."""
         _code, out, _err = run_main(ROOT / "configs/test/depth_2.xml")
-        self.assertIn("C -> не анализировался", out)
+        self.assertIn("    └── C (...)", out)
         _code, out, _err = run_main(ROOT / "configs/test/filter_net.xml")
-        self.assertIn("Исключены фильтром: NET", out)
+        self.assertNotIn('"NET"', out)
         self.assertNotIn("TLS", out)
 
-    def test_load_order_output(self):
-        """Порядок загрузки выводится пронумерованным списком."""
-        _code, out, _err = run_main(ROOT / "configs/test/cycle.xml")
-        self.assertIn("Порядок загрузки зависимостей пакета A:", out)
-        self.assertIn("  5. A", out)
-        self.assertIn("пропущены рёбра C -> A, D -> D", out)
+    def test_ascii_tree_disabled(self):
+        """При ascii_tree = false дерево не выводится."""
+        _code, out, _err = run_main(ROOT / "configs/test/depth_5.xml")
+        self.assertNotIn("ASCII-дерево", out)
+        self.assertIn("digraph dependencies", out)
 
     def test_errors(self):
         """Нет пакета и битый файл — код 1 и сообщение."""

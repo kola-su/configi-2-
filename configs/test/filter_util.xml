@@ -4,8 +4,8 @@
     <package>APP</package>
     <repository>examples/names.txt</repository>
     <test_mode>true</test_mode>
-    <output_file>filter_util.svg</output_file>
-    <ascii_tree>false</ascii_tree>
+    <output_file>output/filter_util.svg</output_file>
+    <ascii_tree>true</ascii_tree>
     <max_depth>10</max_depth>
     <filter>UTIL</filter>
 </config>

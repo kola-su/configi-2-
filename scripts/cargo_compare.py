@@ -2,9 +2,9 @@
 
 Скрипт превращает файл тестового репозитория в рабочее пространство
 (workspace) Cargo: каждый пакет — отдельный крейт с зависимостями через
-path. Затем запускается настоящий Cargo без доступа к сети, и его
-порядок сборки сравнивается с порядком загрузки, который вычисляет
-визуализатор.
+path. Затем запускается настоящий Cargo без доступа к сети: его
+порядок сборки сравнивается с порядком загрузки визуализатора, а
+вывод штатной команды cargo tree — с ASCII-деревом визуализатора.
 
 Запуск: python scripts/cargo_compare.py examples/simple.txt A
 """
@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 graph_module = importlib.import_module("graph")
 local_repo = importlib.import_module("local_repo")
+visual = importlib.import_module("visual")
 
 DEFAULT_OUT = ROOT / "build" / "cargo"
 COMPILING = re.compile(r"Compiling (\S+) v")
@@ -74,6 +75,38 @@ def cargo_build_order(folder, package):
     return [name.upper() for name in order], ""
 
 
+def cargo_tree(folder, package):
+    """Возвращает вывод cargo tree с именами пакетов без версий."""
+    result = run_cargo(folder, "tree", "-p", crate_name(package),
+                       "--format", "{lib}")
+    return result.stdout.strip().upper()
+
+
+def compare_order(graph, folder, package):
+    """Печатает порядок загрузки визуализатора и порядок сборки Cargo."""
+    ours = graph_module.load_order(graph.edges, package)
+    cargo, error = cargo_build_order(folder, package)
+    print("Порядок загрузки")
+    print(f"  визуализатор: {' '.join(ours)}")
+    if cargo is None:
+        print(f"  Cargo: {error}")
+        return False
+    print(f"  Cargo:        {' '.join(cargo)}")
+    print("  Совпадает" if cargo == ours else "  Отличается")
+    return True
+
+
+def compare_tree(graph, folder, package):
+    """Печатает ASCII-дерево визуализатора и вывод cargo tree."""
+    ours = visual.ascii_tree(graph)
+    cargo = cargo_tree(folder, package)
+    print("ASCII-дерево визуализатора:")
+    print(ours)
+    print("cargo tree:")
+    print(cargo)
+    print("  Совпадает" if cargo == ours else "  Отличается")
+
+
 def parse_args(argv=None):
     """Разбирает аргументы: файл тестового графа и имя пакета."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -84,22 +117,18 @@ def parse_args(argv=None):
 
 
 def main(argv=None):
-    """Печатает порядок визуализатора и порядок сборки Cargo рядом."""
+    """Сравнивает порядок загрузки и дерево зависимостей с Cargo."""
     args = parse_args(argv)
     repository = local_repo.FileRepository(args.graph_file)
     graph = graph_module.build_graph(args.package, repository.dependencies,
                                      len(repository.graph) + 1)
-    ours = graph_module.load_order(graph.edges, args.package)
     folder = Path(args.out) if args.out else DEFAULT_OUT / Path(
         args.graph_file).stem
     write_workspace(repository.graph, folder)
-    cargo, error = cargo_build_order(folder, args.package)
-    print(f"Визуализатор: {' '.join(ours)}")
-    if cargo is None:
-        print(f"Cargo: ошибка\n{error}")
+    print(f"=== {args.graph_file}, пакет {args.package}")
+    if not compare_order(graph, folder, args.package):
         return 1
-    print(f"Cargo:        {' '.join(cargo)}")
-    print("Совпадает" if cargo == ours else "Отличается")
+    compare_tree(graph, folder, args.package)
     return 0
 
 

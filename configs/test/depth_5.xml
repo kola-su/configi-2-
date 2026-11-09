@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Глубина 5 на той же цепочке -->
+<!-- Глубина 5 на той же цепочке, ASCII-дерево выключено -->
 <config>
     <package>A</package>
     <repository>examples/chain.txt</repository>
     <test_mode>true</test_mode>
-    <output_file>depth_5.svg</output_file>
+    <output_file>output/depth_5.svg</output_file>
     <ascii_tree>false</ascii_tree>
     <max_depth>5</max_depth>
     <filter></filter>

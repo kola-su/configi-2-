@@ -170,6 +170,8 @@ class MainTest(unittest.TestCase):
                 text = config.read_text(encoding="utf-8")
                 text = text.replace("https://index.crates.io", url)
                 text = text.replace("serde_json<", "demo<")
+                text = text.replace("<output_file>output/",
+                                    f"<output_file>{folder}/")
                 path = Path(folder) / "config.xml"
                 path.write_text(text, encoding="utf-8")
                 output = io.StringIO()
@@ -177,6 +179,7 @@ class MainTest(unittest.TestCase):
                     code = main.main([str(path)])
         self.assertEqual(code, 0)
         lines = output.getvalue().splitlines()
-        self.assertIn("demo -> itoa, serde", lines)
-        self.assertIn("serde -> нет зависимостей", lines)
-        self.assertIn("Пакетов в графе: 3", lines)
+        self.assertIn("demo", lines)
+        self.assertIn("├── itoa", lines)
+        self.assertIn("└── serde", lines)
+        self.assertIn('    "demo" -> "serde";', lines)

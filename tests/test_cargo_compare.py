@@ -48,6 +48,17 @@ class CargoTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("Совпадает", output.getvalue())
 
+    def test_tree_matches(self):
+        """На графе simple дерево cargo tree совпадает с нашим."""
+        graph_module = importlib.import_module("graph")
+        repository = compare.local_repo.FileRepository(
+            str(ROOT / "examples/simple.txt"))
+        graph = graph_module.build_graph("A", repository.dependencies, 10)
+        with tempfile.TemporaryDirectory() as folder:
+            compare.write_workspace(repository.graph, Path(folder))
+            tree = compare.cargo_tree(Path(folder), "A")
+        self.assertEqual(tree, compare.visual.ascii_tree(graph))
+
     def test_cycle_rejected(self):
         """Цикл Cargo не принимает: возвращается ошибка."""
         with tempfile.TemporaryDirectory() as folder:
