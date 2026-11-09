@@ -87,3 +87,29 @@ def find_cycles(edges, root):
             on_path.add(dep)
             stack.append(iter(edges.get(dep, [])))
     return cycles
+
+
+def load_order(edges, root):
+    """Возвращает порядок загрузки: пакет идёт после всех зависимостей.
+
+    Это обратный топологический порядок, полученный итеративным обходом
+    в глубину (постпорядок, без рекурсии). Зависимости обходятся в том
+    порядке, в котором они перечислены у пакета. Ребро, замыкающее
+    цикл, пропускается: выполнить его требование невозможно.
+    """
+    order = []
+    done = set()
+    on_path = {root}
+    stack = [(root, iter(edges.get(root, [])))]
+    while stack:
+        name, deps = stack[-1]
+        dep = next(deps, None)
+        if dep is None:
+            stack.pop()
+            on_path.discard(name)
+            done.add(name)
+            order.append(name)
+        elif dep not in done and dep not in on_path:
+            on_path.add(dep)
+            stack.append((dep, iter(edges.get(dep, []))))
+    return order

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Многобуквенные имена без фильтра: полный граф и порядок загрузки -->
+<config>
+    <package>APP</package>
+    <repository>examples/names.txt</repository>
+    <test_mode>true</test_mode>
+    <output_file>names.svg</output_file>
+    <ascii_tree>false</ascii_tree>
+    <max_depth>10</max_depth>
+    <filter></filter>
+</config>

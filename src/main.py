@@ -5,7 +5,7 @@ import sys
 
 from cargo import CargoRegistry, RegistryError
 from config import ConfigError, load_config
-from graph import build_graph, find_cycles
+from graph import build_graph, find_cycles, load_order
 from local_repo import FileRepository
 
 DEFAULT_CONFIG = "config.xml"
@@ -73,8 +73,18 @@ def print_cycles(cycles):
         print("  " + " -> ".join(cycle))
 
 
+def print_load_order(graph, cycles):
+    """Печатает порядок загрузки зависимостей пакета."""
+    print(f"Порядок загрузки зависимостей пакета {graph.root}:")
+    for number, name in enumerate(load_order(graph.edges, graph.root), 1):
+        print(f"  {number}. {name}")
+    if cycles:
+        print("Порядок неполный: из-за циклов пропущены рёбра "
+              + ", ".join(f"{cycle[-2]} -> {cycle[-1]}" for cycle in cycles))
+
+
 def main(argv=None):
-    """Загружает конфигурацию, строит и выводит граф зависимостей."""
+    """Строит граф зависимостей и выводит его и порядок загрузки."""
     args = parse_args(argv)
     try:
         config = load_config(args.config)
@@ -86,8 +96,11 @@ def main(argv=None):
     except RegistryError as error:
         print_problems("Ошибка получения зависимостей:", [str(error)])
         return 1
+    cycles = find_cycles(graph.edges, graph.root)
     print_graph(graph)
-    print_cycles(find_cycles(graph.edges, graph.root))
+    print_cycles(cycles)
+    print()
+    print_load_order(graph, cycles)
     return 0
 
 

@@ -99,6 +99,45 @@ class CycleTest(unittest.TestCase):
         self.assertEqual(graph_module.find_cycles(SIMPLE, "A"), [])
 
 
+def is_valid_order(order, edges, skipped=()):
+    """Проверяет, что каждый пакет идёт после своих зависимостей."""
+    position = {name: index for index, name in enumerate(order)}
+    return all(position[dep] < position[name]
+               for name, deps in edges.items() for dep in deps
+               if (name, dep) not in skipped)
+
+
+class LoadOrderTest(unittest.TestCase):
+    """Проверяет порядок загрузки зависимостей."""
+
+    def test_simple(self):
+        """Зависимости раньше зависящих, общая E загружается один раз."""
+        order = graph_module.load_order(build(SIMPLE).edges, "A")
+        self.assertEqual(order, list("DGEBFCA"))
+        self.assertTrue(is_valid_order(order, SIMPLE))
+
+    def test_cycle(self):
+        """В цикле пропускается замыкающее ребро, остальное соблюдено."""
+        order = graph_module.load_order(build(CYCLE).edges, "A")
+        self.assertEqual(order, ["D", "C", "B", "A"])
+        self.assertTrue(is_valid_order(order, CYCLE,
+                                       {("C", "A"), ("D", "D")}))
+
+    def test_depth_and_filter(self):
+        """Глубина и фильтр сокращают порядок загрузки."""
+        graph = build(SIMPLE, depth=1, filter_text="C")
+        self.assertEqual(graph_module.load_order(graph.edges, "A"),
+                         ["B", "A"])
+
+    def test_without_recursion(self):
+        """Длинная цепочка обрабатывается без переполнения стека."""
+        size = sys.getrecursionlimit() * 2
+        chain = {f"P{i}": [f"P{i + 1}"] for i in range(size)}
+        order = graph_module.load_order(chain, "P0")
+        self.assertEqual(order[0], f"P{size}")
+        self.assertEqual(order[-1], "P0")
+
+
 class FileRepositoryTest(unittest.TestCase):
     """Проверяет файл тестового репозитория."""
 
@@ -146,6 +185,13 @@ class MainTest(unittest.TestCase):
         _code, out, _err = run_main(ROOT / "configs/test/filter_net.xml")
         self.assertIn("Исключены фильтром: NET", out)
         self.assertNotIn("TLS", out)
+
+    def test_load_order_output(self):
+        """Порядок загрузки выводится пронумерованным списком."""
+        _code, out, _err = run_main(ROOT / "configs/test/cycle.xml")
+        self.assertIn("Порядок загрузки зависимостей пакета A:", out)
+        self.assertIn("  5. A", out)
+        self.assertIn("пропущены рёбра C -> A, D -> D", out)
 
     def test_errors(self):
         """Нет пакета и битый файл — код 1 и сообщение."""
